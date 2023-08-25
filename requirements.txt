@@ -1,0 +1,5 @@
+aiogram~=2.25.1
+peewee~=3.16.2
+requests~=2.25.1
+python-dotenv~=1.0.0
+pydantic~=2.1.1

@@ -19,13 +19,12 @@ def _make_request(method: str, url: str, headers: Dict, params: Dict, success=20
     return status_code
 
 
-def _get_test(method: str, url: str, headers: Dict, querystring: Dict, func=_make_request):
+def _getter(method: str, url: str, headers: Dict, querystring: Dict, func=_make_request):
     response = func(method, url, headers=headers, params=querystring)
-
     return response
 
 
 class SiteApiInterface:
     @staticmethod
-    def get_test():
-        return _get_test
+    def getter():
+        return _getter
