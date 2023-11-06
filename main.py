@@ -1,10 +1,26 @@
 from database.common.models import db, History
 from database.core import crud
-from site_api.core import headers, site_api, url
-from tg_api.callbacks import dp
+
+import asyncio
+from aiogram import Bot, Dispatcher
+from aiogram.fsm.storage.memory import MemoryStorage
+
+from settings import SiteSettings
+from tg_api.callbacks import router
 
 
-# db_write = crud.create()
-# db_read = crud.retrieve()
+async def main():
+    site = SiteSettings()
+    bot = Bot(token=site.api_token.get_secret_value())
+    dp = Dispatcher(bot=bot, storage=MemoryStorage())
+    dp.include_router(router)
 
-dp.start_polling(dp, skip_updates=True)
+    # db_write = crud.create()
+    # db_read = crud.retrieve()
+
+    await bot.delete_webhook(drop_pending_updates=True)
+    await dp.start_polling(bot)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -1,30 +1,50 @@
 from typing import Dict
 from settings import SiteSettings
-
+from alpha_vantage.timeseries import TimeSeries
 import requests
+import matplotlib
+import matplotlib.pyplot as plt
+import os
+import pandas
 
 
-def _make_request(method: str, url: str, headers: Dict, params: Dict, success=200):
+def _getter(url: str, headers: Dict, params: Dict):
     response = requests.request(
-        method,
+        "GET",
         url,
         headers=headers,
-        params=params,
+        params=params
     )
-    status_code = response.status_code
 
-    if status_code == success:
+    if response.ok:
         return response
 
-    return status_code
+    return response.status_code
 
 
-def _getter(method: str, url: str, headers: Dict, querystring: Dict, func=_make_request):
-    response = func(method, url, headers=headers, params=querystring)
-    return response
+def _get_graph(symbol: str, interval: str):
+    ts = TimeSeries(key=os.environ['AV_KEY'], output_format='pandas')
+
+    if interval == '8hrs':
+        data, meta_data = ts.get_intraday(symbol=symbol, interval='5min')
+    elif interval == '32hrs':
+        data, meta_data = ts.get_intraday(symbol=symbol, interval='15min')
+    elif interval == '3day':
+        data, meta_data = ts.get_intraday(symbol=symbol, interval='30min')
+    elif interval == '10day':
+        data, meta_data = ts.get_intraday(symbol=symbol, interval='60min')
+
+    data['4. close'].plot()
+    file_name = symbol + interval + '.png'
+    plt.savefig(file_name)
+    return file_name
 
 
 class SiteApiInterface:
     @staticmethod
     def getter():
         return _getter
+
+    @staticmethod
+    def get_graph():
+        return _get_graph

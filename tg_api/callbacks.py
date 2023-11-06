@@ -1,42 +1,36 @@
-from aiogram import Bot, Dispatcher, types
-from settings import SiteSettings
+from aiogram import Router, types
 from site_api.core import headers, site_api, url
 from .utils.states import GetArg
 from database.common.models import db, History
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.filters.command import Command, CommandStart
+
+router = Router()
 
 
-site = SiteSettings()
-
-bot = Bot(token=site.api_token.get_secret_value())
-dp = Dispatcher(bot=bot, storage=MemoryStorage)
-
-
-@dp.message(commands=['start'])
+@router.message(CommandStart())
 async def send_hello(message: types.Message):
     await message.reply("Hi!")
 
 
-@dp.message(commands=['quote'])
+@router.message(Command('quote'))
 async def quote_get_arg(message: types.Message, state: FSMContext):
     await state.set_state(GetArg.quote_arg)
     await message.answer('Enter the name of the ticker you are interested in')
 
 
-@dp.message(state=GetArg.quote_arg)
+@router.message(GetArg.quote_arg)
 async def quote_endpoint(message: types.Message, state: FSMContext):
     await state.update_data(quote_arg=message.text)
     await state.clear()
     ticker_name = message.text
     quote = site_api.getter()
-    response = quote(method="GET",
-                     url=url,
+    response = quote(url=url,
                      headers=headers,
-                     querystring={"symbol": ticker_name, "function": 'GLOBAL_QUOTE'})
+                     params={"symbol": ticker_name, "function": 'GLOBAL_QUOTE'})
 
-    if isinstance(response, int):
-        await message.answer('Error', str(response))
+    if not response.ok:
+        await message.answer('Error', str(response.status_code))
         exit(1)
 
     response = response.json()['Global Quote']
@@ -48,46 +42,62 @@ async def quote_endpoint(message: types.Message, state: FSMContext):
     await message.answer(answer)
 
 
-@dp.message(commands=['all'])
+@router.message(Command('all'))
 async def all_endpoint(message: types.Message):
-    get_all = site_api.getter()
-    response = get_all(method="GET",
-                       url=url,
-                       headers=headers,
-                       querystring={"function": 'LISTING_STATUS'})
+    querystring = 'function=LISTING_STATUS'
+    file = types.URLInputFile(url=url + '?' + querystring,
+                              headers=headers,
+                              filename="listing_status.csv")
 
-    if isinstance(response, int):
-        await message.answer('Error', str(response))
-        exit(1)
-
-    await message.answer(response)
+    await message.answer_document(file)
 
 
-@dp.message(commands=['popular'])
+@router.message(Command('popular'))
 async def popular_endpoint(message: types.Message):
     pass
 
 
-@dp.message(commands=['graph'])
-async def graph_endpoint(message: types.Message):
-    pass
+@router.message(Command('graph'))
+async def graph_get_arg(message: types.Message, state: FSMContext):
+    await state.set_state(GetArg.graph_arg)
+    await message.answer('Enter the name of the ticker and time interval:\n'
+                         '1min/5min/15min/30min/60min/day/week/month\n\n'
+                         'Example: AAPL 15min')
 
 
-@dp.message(commands=['history'])
+@router.message(GetArg.graph_arg)
+async def graph_endpoint(message: types.Message, state: FSMContext):
+    await state.update_data(graph_arg=message.text)
+    await state.clear()
+
+    ticker_name, interval = message.text.split(' ')
+    intervals = ['8hrs', '32hrs', '3day', '10day']
+
+    if interval not in intervals:
+        await message.answer('Error, wrong time interval')
+
+    graph_func = site_api.get_graph()
+    graph = types.FSInputFile(graph_func(symbol=ticker_name, interval=interval))
+
+    await message.answer_photo(graph)
+
+
+@router.message(Command('history'))
 async def history_endpoint(message: types.Message):
     pass
 
 
-@dp.message(commands=['low'])
+@router.message(Command('low'))
 async def low_endpoint(message: types.Message):
     pass
 
 
-@dp.message(commands=['high'])
+@router.message(Command('high'))
 async def high_endpoint(message: types.Message):
     pass
 
 
-@dp.message()
+@router.message()
 async def echo(message: types.Message):
     await message.answer(message.text)
+
