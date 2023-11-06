@@ -39,7 +39,6 @@ def _get_graph(symbol: str, interval: str):
     plt.savefig(file_name)
     return file_name
 
-
 class SiteApiInterface:
     @staticmethod
     def getter():

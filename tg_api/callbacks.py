@@ -54,7 +54,25 @@ async def all_endpoint(message: types.Message):
 
 @router.message(Command('popular'))
 async def popular_endpoint(message: types.Message):
-    pass
+    popular = site_api.getter()
+    response = popular(url=url,
+                       headers=headers,
+                       params={"function": 'TOP_GAINERS_LOSERS'})
+
+    if not response.ok:
+        await message.answer('Error', str(response.status_code))
+        exit(1)
+
+    response = response.json()['most_actively_traded'][:10]
+    answer = ''
+
+    count = 1
+    for ticker in response:
+        name = ticker['ticker']
+        answer += f'{count}. {name}\n'
+        count += 1
+
+    await message.answer(answer)
 
 
 @router.message(Command('graph'))
@@ -89,12 +107,50 @@ async def history_endpoint(message: types.Message):
 
 @router.message(Command('low'))
 async def low_endpoint(message: types.Message):
-    pass
+    high = site_api.getter()
+    response = high(url=url,
+                    headers=headers,
+                    params={"function": 'TOP_GAINERS_LOSERS'})
+
+    if not response.ok:
+        await message.answer('Error', str(response.status_code))
+        exit(1)
+
+    response = response.json()['top_losers'][:10]
+    answer = ''
+
+    count = 1
+    for ticker in response:
+        name = ticker['ticker']
+        change = ticker['change_percentage']
+        answer += f'{count}. {name}: {change}\n'
+        count += 1
+
+    await message.answer(answer)
 
 
 @router.message(Command('high'))
 async def high_endpoint(message: types.Message):
-    pass
+    high = site_api.getter()
+    response = high(url=url,
+                    headers=headers,
+                    params={"function": 'TOP_GAINERS_LOSERS'})
+
+    if not response.ok:
+        await message.answer('Error', str(response.status_code))
+        exit(1)
+
+    response = response.json()['top_gainers'][:10]
+    answer = ''
+
+    count = 1
+    for ticker in response:
+        name = ticker['ticker']
+        change = ticker['change_percentage']
+        answer += f'{count}. {name}: {change}\n'
+        count += 1
+
+    await message.answer(answer)
 
 
 @router.message()
