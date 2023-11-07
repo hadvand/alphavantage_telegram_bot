@@ -1,11 +1,8 @@
 from typing import Dict
-from settings import SiteSettings
 from alpha_vantage.timeseries import TimeSeries
 import requests
-import matplotlib
 import matplotlib.pyplot as plt
 import os
-import pandas
 
 
 def _getter(url: str, headers: Dict, params: Dict):
@@ -29,15 +26,17 @@ def _get_graph(symbol: str, interval: str):
         data, meta_data = ts.get_intraday(symbol=symbol, interval='5min')
     elif interval == '32hrs':
         data, meta_data = ts.get_intraday(symbol=symbol, interval='15min')
-    elif interval == '3day':
+    elif interval == '3days':
         data, meta_data = ts.get_intraday(symbol=symbol, interval='30min')
-    elif interval == '10day':
+    elif interval == '10days':
         data, meta_data = ts.get_intraday(symbol=symbol, interval='60min')
 
     data['4. close'].plot()
     file_name = symbol + interval + '.png'
     plt.savefig(file_name)
+
     return file_name
+
 
 class SiteApiInterface:
     @staticmethod

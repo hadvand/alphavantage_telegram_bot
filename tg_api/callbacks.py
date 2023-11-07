@@ -1,11 +1,14 @@
 from aiogram import Router, types
 from site_api.core import headers, site_api, url
 from .utils.states import GetArg
-from database.common.models import db, History
+from database.core import crud, db, History
 from aiogram.fsm.context import FSMContext
 from aiogram.filters.command import Command, CommandStart
 
 router = Router()
+
+db_write = crud.create()
+db_read = crud.retrieve()
 
 
 @router.message(CommandStart())
@@ -79,7 +82,7 @@ async def popular_endpoint(message: types.Message):
 async def graph_get_arg(message: types.Message, state: FSMContext):
     await state.set_state(GetArg.graph_arg)
     await message.answer('Enter the name of the ticker and time interval:\n'
-                         '1min/5min/15min/30min/60min/day/week/month\n\n'
+                         '8hrs/32hrs/3days/10days\n\n'
                          'Example: AAPL 15min')
 
 
@@ -89,7 +92,7 @@ async def graph_endpoint(message: types.Message, state: FSMContext):
     await state.clear()
 
     ticker_name, interval = message.text.split(' ')
-    intervals = ['8hrs', '32hrs', '3day', '10day']
+    intervals = ['8hrs', '32hrs', '3days', '10days']
 
     if interval not in intervals:
         await message.answer('Error, wrong time interval')
@@ -151,9 +154,3 @@ async def high_endpoint(message: types.Message):
         count += 1
 
     await message.answer(answer)
-
-
-@router.message()
-async def echo(message: types.Message):
-    await message.answer(message.text)
-

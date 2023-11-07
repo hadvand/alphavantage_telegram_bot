@@ -1,6 +1,5 @@
 from typing import Dict, List, TypeVar
-from ..common.models import db
-from database.common.models import ModelBase
+from database.common.models import ModelBase, db, History
 from peewee import ModelSelect
 
 

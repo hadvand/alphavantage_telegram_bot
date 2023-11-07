@@ -12,13 +12,5 @@ class ModelBase(pw.Model):
 
 
 class History(ModelBase):
-    symbol = pw.TextField()
-    open = pw.TextField()
-    high = pw.TextField()
-    low = pw.TextField()
-    price = pw.TextField()
-    volume = pw.TextField()
-    latest_trading_day = pw.TextField()
-    previous_close = pw.TextField()
-    change = pw.TextField()
-    change_percent = pw.TextField()
+    command = pw.TextField()
+    ticker = pw.TextField()
