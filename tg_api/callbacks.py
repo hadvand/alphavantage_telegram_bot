@@ -34,13 +34,15 @@ async def quote_endpoint(message: types.Message, state: FSMContext):
 
     if not response.ok:
         await message.answer('Error', str(response.status_code))
-        exit(1)
 
     response = response.json()['Global Quote']
     answer = ''
 
     for key, value in response.items():
         answer += f'{key[4:]}: {value}\n'
+
+    data = [{"command": "/quote", "ticker": ticker_name}]
+    db_write(db, History, data)
 
     await message.answer(answer)
 
@@ -51,6 +53,9 @@ async def all_endpoint(message: types.Message):
     file = types.URLInputFile(url=url + '?' + querystring,
                               headers=headers,
                               filename="listing_status.csv")
+
+    data = [{"command": "/all", "ticker": ""}]
+    db_write(db, History, data)
 
     await message.answer_document(file)
 
@@ -64,7 +69,6 @@ async def popular_endpoint(message: types.Message):
 
     if not response.ok:
         await message.answer('Error', str(response.status_code))
-        exit(1)
 
     response = response.json()['most_actively_traded'][:10]
     answer = ''
@@ -75,6 +79,9 @@ async def popular_endpoint(message: types.Message):
         answer += f'{count}. {name}\n'
         count += 1
 
+    data = [{"command": "/popular", "ticker": ""}]
+    db_write(db, History, data)
+
     await message.answer(answer)
 
 
@@ -83,7 +90,7 @@ async def graph_get_arg(message: types.Message, state: FSMContext):
     await state.set_state(GetArg.graph_arg)
     await message.answer('Enter the name of the ticker and time interval:\n'
                          '8hrs/32hrs/3days/10days\n\n'
-                         'Example: AAPL 15min')
+                         'Example: AAPL 32hrs')
 
 
 @router.message(GetArg.graph_arg)
@@ -100,12 +107,23 @@ async def graph_endpoint(message: types.Message, state: FSMContext):
     graph_func = site_api.get_graph()
     graph = types.FSInputFile(graph_func(symbol=ticker_name, interval=interval))
 
+    data = [{"command": "/graph", "ticker": ticker_name}]
+    db_write(db, History, data)
+
     await message.answer_photo(graph)
 
 
 @router.message(Command('history'))
 async def history_endpoint(message: types.Message):
-    pass
+    retrieved = db_read(db, History, History.created_at, History.command, History.ticker)
+    answer = ''
+    for element in retrieved:
+        answer += f'{element.created_at}: {element.command} {element.ticker}\n'
+
+    data = [{"command": "/history", "ticker": ""}]
+    db_write(db, History, data)
+
+    await message.answer(answer)
 
 
 @router.message(Command('low'))
@@ -117,7 +135,6 @@ async def low_endpoint(message: types.Message):
 
     if not response.ok:
         await message.answer('Error', str(response.status_code))
-        exit(1)
 
     response = response.json()['top_losers'][:10]
     answer = ''
@@ -128,6 +145,9 @@ async def low_endpoint(message: types.Message):
         change = ticker['change_percentage']
         answer += f'{count}. {name}: {change}\n'
         count += 1
+
+    data = [{"command": "/low", "ticker": ""}]
+    db_write(db, History, data)
 
     await message.answer(answer)
 
@@ -141,7 +161,6 @@ async def high_endpoint(message: types.Message):
 
     if not response.ok:
         await message.answer('Error', str(response.status_code))
-        exit(1)
 
     response = response.json()['top_gainers'][:10]
     answer = ''
@@ -152,5 +171,8 @@ async def high_endpoint(message: types.Message):
         change = ticker['change_percentage']
         answer += f'{count}. {name}: {change}\n'
         count += 1
+
+    data = [{"command": "/high", "ticker": ""}]
+    db_write(db, History, data)
 
     await message.answer(answer)

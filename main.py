@@ -15,9 +15,6 @@ async def main():
     dp = Dispatcher(bot=bot, storage=MemoryStorage())
     dp.include_router(router)
 
-    # db_write = crud.create()
-    # db_read = crud.retrieve()
-
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
