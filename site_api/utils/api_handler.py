@@ -6,6 +6,7 @@ import os
 
 
 def _getter(url: str, headers: Dict, params: Dict):
+    """Get request to AV api"""
     response = requests.request(
         "GET",
         url,
@@ -20,6 +21,7 @@ def _getter(url: str, headers: Dict, params: Dict):
 
 
 def _get_graph(symbol: str, interval: str):
+    """Get graph for given symbol and interval"""
     ts = TimeSeries(key=os.environ['AV_KEY'], output_format='pandas')
 
     if interval == '8hrs':
@@ -30,6 +32,8 @@ def _get_graph(symbol: str, interval: str):
         data, meta_data = ts.get_intraday(symbol=symbol, interval='30min')
     elif interval == '10days':
         data, meta_data = ts.get_intraday(symbol=symbol, interval='60min')
+    else:
+        return None
 
     data['4. close'].plot()
     file_name = symbol + interval + '.png'

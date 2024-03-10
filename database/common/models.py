@@ -14,3 +14,4 @@ class ModelBase(pw.Model):
 class History(ModelBase):
     command = pw.TextField()
     ticker = pw.TextField()
+    user = pw.TextField()

@@ -1,5 +1,6 @@
-aiogram~=2.25.1
+aiogram~=3.0.0rc2
 peewee~=3.16.2
-requests~=2.25.1
+requests~=2.31.0
 python-dotenv~=1.0.0
-pydantic~=2.1.1
+pydantic~=2.3.0
+matplotlib~=3.7.2
