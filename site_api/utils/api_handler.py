@@ -24,6 +24,11 @@ def _get_graph(symbol: str, interval: str):
     """Get graph for given symbol and interval"""
     ts = TimeSeries(key=os.environ['AV_KEY'], output_format='pandas')
 
+    try:
+        ts.get_intraday(symbol=symbol)
+    except ValueError:
+        return None
+
     if interval == '8hrs':
         data, meta_data = ts.get_intraday(symbol=symbol, interval='5min')
     elif interval == '32hrs':
