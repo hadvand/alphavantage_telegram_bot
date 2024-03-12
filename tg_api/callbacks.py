@@ -4,6 +4,7 @@ from .utils.states import GetArg
 from database.core import crud, db, History
 from aiogram.fsm.context import FSMContext
 from aiogram.filters.command import Command, CommandStart
+import os
 
 router = Router()
 
@@ -40,6 +41,10 @@ async def quote_endpoint(message: types.Message, state: FSMContext):
 
     response = response.json()['Global Quote']
     answer = ''
+
+    if len(response.items()) == 0:
+        await message.answer('You may have entered an invalid ticker name \nCanceling operation...')
+        return
 
     for key, value in response.items():
         answer += f'{key[4:]}: {value}\n'
@@ -105,6 +110,10 @@ async def graph_endpoint(message: types.Message, state: FSMContext):
     await state.update_data(graph_arg=message.text)
     await state.clear()
 
+    if len(message.text.split(' ')) != 2:
+        await message.answer('Only one argument was entered \nCanceling operation...')
+        return
+
     ticker_name, interval = message.text.split(' ')
     intervals = ['8hrs', '32hrs', '3days', '10days']
 
@@ -112,12 +121,22 @@ async def graph_endpoint(message: types.Message, state: FSMContext):
         await message.answer('Error, wrong time interval')
 
     graph_func = site_api.get_graph()
-    graph = types.FSInputFile(graph_func(symbol=ticker_name, interval=interval))
+    graph_name = graph_func(symbol=ticker_name, interval=interval)
+
+    if graph_name is None:
+        await message.answer('You may have entered an invalid ticker name \nCanceling operation...')
+        return
+
+    graph = types.FSInputFile(graph_name)
 
     data = [{'command': '/graph', 'ticker': ticker_name.upper(), 'user': message.from_user.id}]
     db_write(db, History, data)
 
     await message.answer_photo(graph)
+
+    for file in os.listdir():   # removing png file after sending it
+        if file.endswith('.png'):
+            os.remove(file)
 
 
 @router.message(Command('history'))
